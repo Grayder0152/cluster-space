@@ -3,11 +3,10 @@ import pandas as pd
 
 from clustering.kmean.centroid_methods import InitialCentroidManager, CentroidMethodName, CentroidMethod
 from distances import DistanceMethodName, DistanceManager
+from settings import CLUSTER_COL_NAME
 
 
 class KMean:
-    cluster_col_name: str = 'cluster'
-
     def __init__(
             self, k: int,
             centroid_method_name: str = CentroidMethodName.K_MEAN_PP.value,
@@ -20,6 +19,7 @@ class KMean:
         )
 
     def clustering(self, dataframe: pd.DataFrame):
+        dataframe = dataframe.copy()
         centroids = self.centroid_method.get_centroids(dataframe)
         while True:
             clusters = self._get_clusters(dataframe, centroids)
@@ -28,8 +28,8 @@ class KMean:
                 break
             centroids = new_centroids
 
-        dataframe[self.cluster_col_name] = clusters
-        return centroids
+        dataframe[CLUSTER_COL_NAME] = clusters
+        return centroids, dataframe
 
     def _get_clusters(self, dataframe: pd.DataFrame, centroids: np.array) -> np.array:
         clusters = []
