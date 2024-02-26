@@ -40,13 +40,18 @@ class MeanShift(ClusteringMethod):
 
 if __name__ == '__main__':
     from extract_data import extract
-    from visualizer import Visualizer2D
+    from visualizer import Visualizer2D, Visualizer3D
+
+    mean_shift = MeanShift(3.0)
 
     df = extract('data_2.csv', delimiter=' ')
-    mean_shift = MeanShift(6.0)
-
     clustered_df = mean_shift.clustering(df)
-
     vis = Visualizer2D()
+    vis.plot(clustered_df)
+    vis.show()
+
+    df = extract('temps.csv', columns=['t36', 't35', 't34'], delimiter=',')
+    clustered_df = mean_shift.clustering(df)
+    vis = Visualizer3D()
     vis.plot(clustered_df)
     vis.show()

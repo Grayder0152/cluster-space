@@ -56,3 +56,24 @@ class KMeans(ClusteringMethod):
             else:
                 new_centroids.append(np.random.rand(dataframe.shape[1]))
         return np.array(new_centroids)
+
+
+if __name__ == '__main__':
+    from extract_data import extract
+    from visualizer import Visualizer2D, ParallelCoordinate
+
+    file_name = 'data_3.csv'
+    k = 3
+    kmeans = KMeans(k)
+
+    df = extract(file_name, delimiter=' ')
+    clustered_df = kmeans.clustering(df)
+    vis = Visualizer2D()
+    vis.plot(clustered_df)
+    vis.show()
+
+    df = extract('temps.csv', columns=['t36', 't35', 't34', 't33', 't32'], delimiter=',')
+    clustered_df = kmeans.clustering(df)
+    vis = ParallelCoordinate()
+    vis.plot(clustered_df)
+    vis.show()
