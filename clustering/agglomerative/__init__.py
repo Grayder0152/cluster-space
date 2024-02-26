@@ -16,29 +16,30 @@ class Agglomerative(ClusteringMethod):
     def __init__(
             self, k: int,
             distance_method_name: Optional[str] = None,
-            linkage_method_name: Optional[str] = None,
+            linkage_method_name: Optional[str] = None
     ):
         distance_method_name = distance_method_name or DistanceMethodName.EUCLIDEAN.value
-        linkage_method_name = linkage_method_name or LinkageMethodName.WARD.value
+        linkage_method_name = linkage_method_name or LinkageMethodName.SINGLE.value
 
         self.k: int = k
         self.distance_method = DistanceManager[distance_method_name]()
-        self.linkage_method = LinkageManager[linkage_method_name](distance_method_name)
+        self.linkage_method = LinkageManager[linkage_method_name]()
 
     def _calculate_distance_matrix(self, dataframe: pd.DataFrame, clusters: Iterable) -> np.array:
         cluster_count = len(dataframe)
         distance_matrix = np.zeros((cluster_count, cluster_count))
 
         for cluster_1, cluster_2 in itertools.combinations(clusters, 2):
-            dist = self.linkage_method.linkage(dataframe, cluster_1, cluster_2)
+            cluster_1_data = dataframe[dataframe[CLUSTER_COL_NAME] == cluster_1].drop(CLUSTER_COL_NAME, axis=1)
+            cluster_2_data = dataframe[dataframe[CLUSTER_COL_NAME] == cluster_2].drop(CLUSTER_COL_NAME, axis=1)
+            dist = self.linkage_method.linkage(cluster_1_data, cluster_2_data)
             distance_matrix[cluster_1, cluster_2] = distance_matrix[cluster_2, cluster_1] = dist
         return distance_matrix
 
     def clustering(self, dataframe: pd.DataFrame) -> pd.DataFrame:
         # TODO: required to be optimize
         max_iteration = len(dataframe)
-        dataframe[CLUSTER_COL_NAME] = dataframe.index
-
+        dataframe.reset_index(inplace=True, names=[CLUSTER_COL_NAME])
         clusters = dataframe[CLUSTER_COL_NAME].unique()
         distance_matrix = self._calculate_distance_matrix(dataframe, clusters)
         while max_iteration != self.k:
@@ -58,9 +59,11 @@ class Agglomerative(ClusteringMethod):
             dataframe.loc[dataframe[CLUSTER_COL_NAME] == merged_cluster, CLUSTER_COL_NAME] = augmented_cluster
 
             clusters = dataframe[CLUSTER_COL_NAME].unique()
+            cluster_1_data = dataframe[dataframe[CLUSTER_COL_NAME] == augmented_cluster].drop(CLUSTER_COL_NAME, axis=1)
             for i in clusters:
+                cluster_2_data = dataframe[dataframe[CLUSTER_COL_NAME] == i].drop(CLUSTER_COL_NAME, axis=1)
                 distance_matrix[augmented_cluster, i] = distance_matrix[
-                    i, augmented_cluster] = self.linkage_method.linkage(dataframe, augmented_cluster, i)
+                    i, augmented_cluster] = self.linkage_method.linkage(cluster_1_data, cluster_2_data)
 
             max_iteration -= 1
         return dataframe
@@ -72,7 +75,7 @@ if __name__ == '__main__':
 
     agg = Agglomerative(3)
 
-    df = extract('temps.csv').drop('Напряжение углекислого газа (PCO2)', axis=1)
+    df = extract('data_2.csv', delimiter=' ')
 
     clustered_df = agg.clustering(df)
     vis = Visualizer2D()
