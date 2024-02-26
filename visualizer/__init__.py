@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from clustering.kmean import KMean
+from clustering.k_means import KMeans
 from settings import CLUSTER_COL_NAME, SAMPLE_DATASETS_DIR
 
 
@@ -16,12 +16,6 @@ class BaseVisualizer(ABC):
 
     def __init__(self, **kwargs) -> None:
         self.figure, self.axis = plt.subplots(1, 1, **kwargs)
-        self.axis.set_title(f'{self.feature_count}D Visualization of Clusters')
-
-    @property
-    @abstractmethod
-    def feature_count(self) -> int:
-        pass
 
     @abstractmethod
     def plot(self, dataframe: pd.DataFrame, feature_names: Optional[list] = None) -> None:
@@ -31,12 +25,26 @@ class BaseVisualizer(ABC):
     def show():
         plt.show()
 
+
+class VisualizerND(BaseVisualizer):
+    figure = None
+    axis = None
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.axis.set_title(f'{self.feature_count}D Visualization of Clusters')
+
+    @property
+    @abstractmethod
+    def feature_count(self) -> int:
+        pass
+
     def add_centroids(self, centroids: np.array) -> None:
         self.axis.scatter(*[centroids[:, i] for i in range(self.feature_count)], s=70, label='Centroids')
         self.axis.legend()
 
 
-class Visualizer2D(BaseVisualizer):
+class Visualizer2D(VisualizerND):
     feature_count = 2
 
     def plot(self, dataframe: pd.DataFrame, feature_names: Optional[list[str, str]] = None) -> None:
@@ -59,7 +67,7 @@ class Visualizer2D(BaseVisualizer):
         self.axis.legend()
 
 
-class Visualizer3D(BaseVisualizer):
+class Visualizer3D(VisualizerND):
     feature_count = 3
 
     def __init__(self):
@@ -93,13 +101,27 @@ class Visualizer3D(BaseVisualizer):
         self.axis.legend()
 
 
-if __name__ == '__main__':
-    km = KMean(3)
+class ParallelCoordinate(BaseVisualizer):
+    def plot(self, dataframe: pd.DataFrame, feature_names: Optional[list[str, str, str]] = None) -> None:
+        if not feature_names:
+            feature_names = dataframe.columns
 
-    df = pd.read_csv(os.path.join(SAMPLE_DATASETS_DIR, 'wines.csv'), delimiter=',')
-    centroids, clustered_df = km.clustering(df)
+        pd.plotting.parallel_coordinates(
+            dataframe[feature_names],
+            class_column=CLUSTER_COL_NAME,
+            ax=self.axis
+        )
+        self.axis.legend(title=CLUSTER_COL_NAME)
+
+
+if __name__ == '__main__':
+    km = KMeans(3)
+
+    df = pd.read_csv(os.path.join(SAMPLE_DATASETS_DIR, 'wines.csv'),  sep='\s+')
+    print(df)
+    clustered_df = km.clustering(df)
 
     vis = Visualizer3D()
     vis.plot(clustered_df)
-    vis.add_centroids(centroids)
+    # vis.add_centroids(centroids)
     vis.show()

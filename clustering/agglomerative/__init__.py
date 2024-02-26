@@ -1,20 +1,26 @@
 import itertools
-from typing import Iterable
+from typing import Iterable, Optional
 
 import numpy as np
 import pandas as pd
 
+from clustering import ClusteringMethod, ClusteringMethodName
 from clustering.agglomerative.linkages import LinkageMethodName, LinkageManager
 from distances import DistanceMethodName, DistanceManager
 from settings import CLUSTER_COL_NAME
 
 
-class Agglomerative:
+class Agglomerative(ClusteringMethod):
+    name = ClusteringMethodName.AGGLOMERATIVE
+
     def __init__(
             self, k: int,
-            linkage_method_name: str = LinkageMethodName.WARD.value,
-            distance_method_name: str = DistanceMethodName.EUCLIDEAN.value
+            distance_method_name: Optional[str] = None,
+            linkage_method_name: Optional[str] = None,
     ):
+        distance_method_name = distance_method_name or DistanceMethodName.EUCLIDEAN.value
+        linkage_method_name = linkage_method_name or LinkageMethodName.WARD.value
+
         self.k: int = k
         self.distance_method = DistanceManager[distance_method_name]()
         self.linkage_method = LinkageManager[linkage_method_name](distance_method_name)
@@ -66,7 +72,7 @@ if __name__ == '__main__':
 
     agg = Agglomerative(3)
 
-    df = extract('temps.csv', ['t33', 't34'])
+    df = extract('temps.csv').drop('Напряжение углекислого газа (PCO2)', axis=1)
 
     clustered_df = agg.clustering(df)
     vis = Visualizer2D()

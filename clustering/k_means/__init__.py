@@ -1,17 +1,25 @@
+from typing import Optional
+
 import numpy as np
 import pandas as pd
 
-from clustering.kmean.centroid_methods import InitialCentroidManager, CentroidMethodName, CentroidMethod
+from clustering import ClusteringMethod, ClusteringMethodName
+from clustering.k_means.centroid_methods import InitialCentroidManager, CentroidMethodName, CentroidMethod
 from distances import DistanceMethodName, DistanceManager
 from settings import CLUSTER_COL_NAME
 
 
-class KMean:
+class KMeans(ClusteringMethod):
+    name = ClusteringMethodName.K_MEANS
+
     def __init__(
             self, k: int,
-            centroid_method_name: str = CentroidMethodName.K_MEAN_PP.value,
-            distance_method_name: str = DistanceMethodName.EUCLIDEAN.value
+            distance_method_name: Optional[str] = None,
+            centroid_method_name: Optional[str] = None
     ):
+        distance_method_name = distance_method_name or DistanceMethodName.EUCLIDEAN.value
+        centroid_method_name = centroid_method_name or CentroidMethodName.K_MEAN_PP.value
+
         self.k: int = k
         self.distance_method = DistanceManager[distance_method_name]()
         self.centroid_method = InitialCentroidManager[centroid_method_name](
@@ -29,7 +37,7 @@ class KMean:
             centroids = new_centroids
 
         dataframe[CLUSTER_COL_NAME] = clusters
-        return centroids, dataframe
+        return dataframe
 
     def _get_clusters(self, dataframe: pd.DataFrame, centroids: np.array) -> np.array:
         clusters = []
@@ -48,4 +56,3 @@ class KMean:
             else:
                 new_centroids.append(np.random.rand(dataframe.shape[1]))
         return np.array(new_centroids)
-

@@ -96,13 +96,13 @@ class LinkageManager(metaclass=_LinkageManager):
 
 
 if __name__ == '__main__':
-    from clustering.kmean import KMean
+    from clustering.k_means import KMeans
     from visualizer import Visualizer2D
     from extract_data import extract
 
 
     def prepare_df():
-        km = KMean(10)
+        km = KMeans(10)
 
         df = extract('data_2.csv', delimiter=' ')
         _, clustered_df = km.clustering(df)

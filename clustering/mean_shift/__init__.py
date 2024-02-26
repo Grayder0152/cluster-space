@@ -1,8 +1,12 @@
 import numpy as np
 import pandas as pd
 
+from clustering import ClusteringMethod, ClusteringMethodName
 
-class MeanShift:
+
+class MeanShift(ClusteringMethod):
+    name = ClusteringMethodName.MEAN_SHIFT
+
     def __init__(self, bandwidth: float):
         self.bandwidth = bandwidth
 
