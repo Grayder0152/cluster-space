@@ -7,6 +7,9 @@ import numpy as np
 
 class DistanceMethodName(StrEnum):
     EUCLIDEAN = auto()
+    MANHATTAN = auto()
+    CHEBYSHEV = auto()
+    HAMMING = auto()
 
 
 class DistanceMethod(ABC):
@@ -32,8 +35,34 @@ class EuclideanDistance(DistanceMethod):
         return np.sqrt(np.sum((point_1 - point_2) ** 2))
 
 
+class ManhattanDistance(DistanceMethod):
+    name = DistanceMethodName.MANHATTAN
+
+    @staticmethod
+    def distance(point_1: np.array, point_2: np.array) -> float:
+        return np.sum(np.abs(point_1 - point_2))
+
+
+class ChebyshevDistance(DistanceMethod):
+    name = DistanceMethodName.CHEBYSHEV
+
+    @staticmethod
+    def distance(point_1: np.array, point_2: np.array) -> float:
+        return np.max(np.abs(point_1 - point_2))
+
+
+class HammingDistance(DistanceMethod):
+    name = DistanceMethodName.HAMMING
+
+    @staticmethod
+    def distance(point_1: np.array, point_2: np.array) -> float:
+        return np.sum(point_1 != point_2) / len(point_1)
+
+
 class _DistanceManager(type):
-    distance_methods = {method.name: method for method in [EuclideanDistance, ]}
+    distance_methods = {
+        method.name: method for method in [EuclideanDistance, ManhattanDistance, ChebyshevDistance, HammingDistance]
+    }
 
     def __getitem__(self, distance_method_name: str) -> Type[DistanceMethod]:
         if distance_method_name not in self.distance_methods:
@@ -46,7 +75,3 @@ class _DistanceManager(type):
 
 class DistanceManager(metaclass=_DistanceManager):
     pass
-
-
-if __name__ == '__main__':
-    print(DistanceManager['euclidean'])
