@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
     file_name = 'data_3.csv'
     k = 3
-    kmeans = KMeans(k)
+    kmeans = KMeans(k=k, centroid_method_name=CentroidMethodName.K_MEAN_PP.value)
 
     df = extract(file_name, delimiter=' ')
     clustered_df = kmeans.clustering(df)
