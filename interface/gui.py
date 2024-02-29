@@ -3,12 +3,11 @@ import sys
 from typing import Optional
 
 import pandas as pd
-from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
-    QApplication, QMainWindow, QGridLayout,
+    QApplication, QMainWindow,
     QPushButton, QFileDialog, QWidget,
-    QComboBox, QLabel, QLineEdit, QSpinBox,
-    QDoubleSpinBox, QHBoxLayout, QVBoxLayout
+    QComboBox, QSpinBox, QDoubleSpinBox,
+    QHBoxLayout, QVBoxLayout
 )
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -29,11 +28,12 @@ CENTROID_METHODS = [i.title() for i in InitialCentroidManager.centroid_methods.k
 LINKAGE_METHODS = [i.title() for i in LinkageManager.linkage_methods.keys()]
 
 
-class KMeansGUI(QMainWindow):
+class GUI(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.load_data_btn: Optional[QPushButton] = None
-        self.run_btn: Optional[QPushButton] = None
+        self.load_data_btn: QPushButton = QPushButton('Load Data')
+        self.run_btn: QPushButton = QPushButton('Run Clustering')
+        self.save_btn: QPushButton = QPushButton('Save Clustered Data')
 
         self.clustering_type: QComboBox = QComboBox(self)
         self.distance_method: QComboBox = QComboBox(self)
@@ -53,6 +53,7 @@ class KMeansGUI(QMainWindow):
             'Mean Shift': [self.bandwidth]
         }
         self.file_name: Optional[str] = None
+        self.clustered_df: Optional[pd.DataFrame] = None
         self.init_ui()
 
     def init_ui(self):
@@ -61,12 +62,11 @@ class KMeansGUI(QMainWindow):
 
         layout = QVBoxLayout()
         top_l = QHBoxLayout()
-        self.load_data_btn = QPushButton('Load Data')
         self.load_data_btn.clicked.connect(self.load_data)
-
-        self.run_btn = QPushButton('Run Clustering')
         self.run_btn.clicked.connect(self.run_clustering)
-
+        self.run_btn.setDisabled(True)
+        self.save_btn.clicked.connect(self.saver)
+        self.save_btn.setDisabled(True)
         self.canvas = FigureCanvas(Figure(figsize=(5, 3)))
 
         self.clustering_type.addItems(CLUSTER_TYPES)
@@ -76,6 +76,11 @@ class KMeansGUI(QMainWindow):
         self.centroid_method.addItems(CENTROID_METHODS)
         self.linkage_method.addItems(LINKAGE_METHODS)
         self.cluster_count.setRange(1, 99)
+        self.distance_method.hide()
+        self.centroid_method.hide()
+        self.linkage_method.hide()
+        self.cluster_count.hide()
+        self.bandwidth.hide()
 
         top_l.addWidget(self.clustering_type)
         top_l.addWidget(self.load_data_btn)
@@ -86,6 +91,7 @@ class KMeansGUI(QMainWindow):
         layout.addLayout(self.clustering_layout)
         layout.addWidget(self.canvas)
         layout.addWidget(self.run_btn)
+        layout.addWidget(self.save_btn)
 
         central_widget = QWidget()
         central_widget.setLayout(layout)
@@ -93,6 +99,7 @@ class KMeansGUI(QMainWindow):
 
     def _set_clustering_widgets(self):
         for widget in self.clustering_widgets[self.clustering_type.currentText()]:
+            widget.show()
             self.clustering_layout.addWidget(widget)
 
     def run_clustering(self):
@@ -116,8 +123,9 @@ class KMeansGUI(QMainWindow):
                 )
             else:
                 return
-            clustered_df = clustering.clustering(df)
-            self.plot(clustered_df)
+            self.clustered_df = clustering.clustering(df)
+            self.plot(self.clustered_df)
+            self.save_btn.setDisabled(False)
 
     def on_clustering_changed(self):
         for i in reversed(range(self.clustering_layout.count())):
@@ -139,6 +147,7 @@ class KMeansGUI(QMainWindow):
             filter="CSV Filed (*.csv)", options=options
         )
         self.load_data_btn.setText(self.file_name.split('/')[-1])
+        self.run_btn.setDisabled(False)
 
     def plot(self, dataframe: pd.DataFrame, feature_names: Optional[list[str, str]] = None) -> None:
         feature_1, feature_2 = feature_names or dataframe.columns.drop(CLUSTER_COL_NAME)[:2]
@@ -157,9 +166,20 @@ class KMeansGUI(QMainWindow):
         ax.legend()
         self.canvas.draw()
 
+    def saver(self):
+        options = QFileDialog.Options()
+        options |= QFileDialog.DontUseNativeDialog
+        options |= QFileDialog.Directory
+        save_file_dir = QFileDialog.getExistingDirectory(options=options)
+        if save_file_dir and self.clustered_df is not None:
+            self.clustered_df.to_csv(
+                os.path.join(save_file_dir, f'clustered_{self.file_name.split('/')[-1]}'),
+                sep=' ', index=False
+            )
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    main_window = KMeansGUI()
+    main_window = GUI()
     main_window.show()
     sys.exit(app.exec_())
