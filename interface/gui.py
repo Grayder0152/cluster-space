@@ -76,6 +76,8 @@ class GUI(QMainWindow):
         self.centroid_method.addItems(CENTROID_METHODS)
         self.linkage_method.addItems(LINKAGE_METHODS)
         self.cluster_count.setRange(1, 99)
+        self.cluster_count.setValue(3)
+        self.bandwidth.setRange(1, 1000)
         self.distance_method.hide()
         self.centroid_method.hide()
         self.linkage_method.hide()
@@ -104,6 +106,7 @@ class GUI(QMainWindow):
 
     def run_clustering(self):
         if self.file_name is not None:
+            print(self.file_name)
             df = extract(self.file_name, delimiter=' ')
             if self.clustering_type.currentText() == 'K Means':
                 clustering = KMeans(

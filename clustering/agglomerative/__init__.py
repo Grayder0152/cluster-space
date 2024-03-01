@@ -73,7 +73,11 @@ if __name__ == '__main__':
     from extract_data import extract
     from visualizer import Visualizer2D
 
-    agg = Agglomerative(k=3, linkage_method_name=LinkageMethodName.SINGLE.value)
+    agg = Agglomerative(
+        k=3,
+        distance_method_name=DistanceMethodName.EUCLIDEAN.value,
+        linkage_method_name=LinkageMethodName.SINGLE.value
+    )
 
     df = extract('data_2.csv', delimiter=' ')
 

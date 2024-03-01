@@ -5,7 +5,7 @@ import pandas as pd
 
 from clustering import ClusteringMethod, ClusteringMethodName
 from clustering.k_means.centroid_methods import InitialCentroidManager, CentroidMethodName, CentroidMethod
-from distances import DistanceMethodName, DistanceManager
+from distances import DistanceMethodName, DistanceManager, DistanceMethod
 from settings import CLUSTER_COL_NAME
 
 
@@ -62,18 +62,22 @@ if __name__ == '__main__':
     from extract_data import extract
     from visualizer import Visualizer2D, ParallelCoordinate
 
-    file_name = 'data_3.csv'
+    file_name = 'data_2.csv'
     k = 3
-    kmeans = KMeans(k=k, centroid_method_name=CentroidMethodName.K_MEAN_PP.value)
+    kmeans = KMeans(
+        k=k,
+        distance_method_name=DistanceMethodName.EUCLIDEAN.value,
+        centroid_method_name=CentroidMethodName.K_MEAN_PP.value
+    )
 
     df = extract(file_name, delimiter=' ')
     clustered_df = kmeans.clustering(df)
     vis = Visualizer2D()
     vis.plot(clustered_df)
     vis.show()
-
-    df = extract('temps.csv', columns=['t36', 't35', 't34', 't33', 't32'], delimiter=',')
-    clustered_df = kmeans.clustering(df)
-    vis = ParallelCoordinate()
-    vis.plot(clustered_df)
-    vis.show()
+    #
+    # df = extract('temps.csv', columns=['t36', 't35', 't34', 't33', 't32'], delimiter=',')
+    # clustered_df = kmeans.clustering(df)
+    # vis = ParallelCoordinate()
+    # vis.plot(clustered_df)
+    # vis.show()
